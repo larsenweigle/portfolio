@@ -37,7 +37,7 @@ const sections = {
   "role": "Data Scientist",
   "location": "San Francisco, CA",
   "interests": ["AI/ML", "Conversational AI", "LLM Applications"],
-  "status": "Building intelligent systems 🤖"
+  "status": "thinking about context windows"
 }`,
     streamContent: `<assistant>
 
@@ -367,14 +367,14 @@ export const Portfolio = () => {
   }
 
   return (
-    <div className="flex overflow-hidden relative flex-col gap-2 justify-center items-center pt-4 w-full h-full short:lg:pt-4 pb-footer-safe-area 2xl:pt-footer-safe-area px-sides short:lg:gap-1 lg:gap-2">
+    <div className="flex overflow-hidden relative flex-col gap-6 justify-center items-center pt-4 w-full h-full short:lg:pt-4 pb-footer-safe-area 2xl:pt-footer-safe-area px-sides">
       <motion.div layout="position" transition={{ duration: DURATION, ease: EASE_OUT }}>
-        <h1 className="font-serif text-2xl italic short:lg:text-2xl sm:text-2xl lg:text-3xl text-foreground">
+        <h1 className="font-serif text-4xl italic short:lg:text-3xl sm:text-4xl lg:text-5xl text-foreground">
           Larsen Weigle
         </h1>
       </motion.div>
 
-      <div className="flex flex-col items-center min-h-0 shrink">
+      <div className="flex flex-col items-center min-h-0 shrink gap-6">
         <AnimatePresenceGuard>
           {!activeSection && (
             <motion.div
@@ -401,8 +401,26 @@ export const Portfolio = () => {
                   transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
                 },
               }}
+              className="flex flex-col items-center gap-6"
             >
-              <div className="flex flex-wrap gap-4 justify-center mb-8">
+              <motion.p
+                initial={isInitialRender.current ? false : { opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{
+                  opacity: 0,
+                  transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
+                }}
+                transition={{
+                  duration: DURATION,
+                  ease: EASE_OUT,
+                  delay: DELAY,
+                }}
+                className="text-sm short:lg:text-sm sm:text-base lg:text-lg leading-relaxed font-medium text-center text-foreground/90 text-pretty max-w-2xl"
+              >
+                Data Scientist specializing in conversational AI and LLM-powered applications. Stanford CS graduate building intelligent systems at the intersection of research and production.
+              </motion.p>
+
+              <div className="flex flex-wrap gap-3 justify-center">
                 {Object.entries(sections).map(([key, section]) => {
                   const IconComponent = section.icon
                   return (
@@ -417,23 +435,6 @@ export const Portfolio = () => {
                   )
                 })}
               </div>
-
-              <motion.p
-                initial={isInitialRender.current ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{
-                  opacity: 0,
-                  transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
-                }}
-                transition={{
-                  duration: DURATION,
-                  ease: EASE_OUT,
-                  delay: DELAY,
-                }}
-                className="text-xs short:lg:text-sm sm:text-sm lg:text-base !leading-[1.1] font-medium text-center text-foreground text-pretty max-w-2xl"
-              >
-                Data scientist and software engineer specializing in conversational AI and LLM-powered applications. Stanford CS graduate building intelligent systems at the intersection of research and production.
-              </motion.p>
             </motion.div>
           )}
 
