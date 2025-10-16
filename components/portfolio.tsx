@@ -50,16 +50,12 @@ San Francisco, CA
 </location>
 
 <role>
-Data Scientist specializing in conversational AI and task-oriented agents. I build AI-powered applications focused on LLM-augmented systems and data-driven solutions.
+Data scientist specializing in conversational AI and task-oriented agents. I build AI-powered applications focused on LLM-augmented systems and data-driven solutions. I love working on highly collaborative, fast-paced teams.
 </role>
 
 <current_focus>
 Tech lead for conversational AI team at Candidly. Building student loan and college planning assistants from prototype to production, defining roadmaps for evaluation, guardrails, and deployment.
 </current_focus>
-
-<technical_stack>
-Python, TypeScript, LangGraph, AI SDK, Arize Phoenix, AWS, Postgres
-</technical_stack>
 
 </assistant>`,
     content: {
@@ -417,7 +413,7 @@ export const Portfolio = () => {
                 }}
                 className="text-sm short:lg:text-sm sm:text-base lg:text-lg leading-relaxed font-medium text-center text-foreground/90 text-pretty max-w-2xl"
               >
-                Data Scientist specializing in conversational AI and LLM-powered applications. Stanford CS graduate building intelligent systems at the intersection of research and production.
+                Data scientist and software engineer shipping LLM products. Previously at Stanford. Now turning research into production systems.
               </motion.p>
 
               <div className="flex flex-wrap gap-3 justify-center">
@@ -480,7 +476,7 @@ export const Portfolio = () => {
                 },
               }}
               ref={contentContainerRef}
-              className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-background/80 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(90dvh-var(--footer-safe-area))] overflow-y-auto"
+              className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-muted/60 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(90dvh-var(--footer-safe-area))] overflow-y-auto"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">
                 {/* Agent Visualization */}

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     default: "Larsen Weigle",
   },
   description:
-    "Data Scientist specializing in conversational AI and LLM-powered applications. Stanford CS graduate building intelligent systems at the intersection of research and production.",
+    "Data scientist and software engineer specializing in conversational AI and LLM-powered applications. Stanford CS graduate building intelligent systems at the intersection of research and production.",
     generator: 'v0.app'
 }
 

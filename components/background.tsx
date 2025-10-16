@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 export const Background = ({ className }: { className?: string }) => {
   return (
     <div className={cn(
-      "absolute inset-0 w-full h-full bg-slate-950 overflow-hidden rounded-[42px] md:rounded-[72px]",
+      "absolute inset-0 w-full h-full bg-background overflow-hidden rounded-[42px] md:rounded-[72px]",
       className
     )}>
-      <div className="absolute inset-0 w-full h-full bg-gradient-radial from-transparent via-slate-950/30 to-slate-950/60 z-20 pointer-events-none" />
+      <div className="absolute inset-0 w-full h-full bg-gradient-radial from-transparent via-background/30 to-background/60 z-20 pointer-events-none" />
       <Boxes />
     </div>
   );
