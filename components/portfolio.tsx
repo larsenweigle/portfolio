@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useEffect, useRef, useState } from "react"
-import { Button, buttonVariants } from "./ui/button"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Button } from "./ui/button"
 import { AnimatePresence, motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Cross1Icon, CodeIcon, PersonIcon, BackpackIcon, RocketIcon } from "@radix-ui/react-icons"
@@ -19,6 +19,11 @@ const SPRING = {
   damping: 10,
   mass: 0.8,
 }
+const LOG_STREAM_DELAY = 120
+const TYPING_SPINUP_DELAY = 200
+const SEGMENT_STAGGER_DELAY = 0.08 // Delay between paragraph reveals (seconds)
+const SEGMENT_INITIAL_Y_OFFSET = 6 // Initial Y offset for segment fade-in (pixels)
+const CONTENT_INITIAL_Y_OFFSET = 12 // Initial Y offset for content container (pixels)
 
 type SectionKey = "me" | "education" | "experience" | "projects"
 
@@ -58,23 +63,6 @@ Tech lead for conversational AI team at Candidly. Building student loan and coll
 </current_focus>
 
 </assistant>`,
-    content: {
-      title: "Hi, I'm Larsen Weigle",
-      subtitle: "Data Scientist specializing in conversational AI and task-oriented agents.",
-      cards: [
-        {
-          title: "What I Do",
-          content:
-            "I build AI-powered applications focused on conversational AI, LLM-augmented systems, and data-driven solutions.",
-          skills: ["Python", "TypeScript", "LangGraph", "AI SDK"],
-        },
-        {
-          title: "Current Focus",
-          content: "Tech lead for conversational AI at Candidly, building student loan and college planning assistants from prototype to production.",
-          skills: [],
-        },
-      ],
-    },
   },
   education: {
     icon: BackpackIcon,
@@ -111,29 +99,6 @@ Men's Water Polo: Four-year varsity athlete, senior captain. NCAA National Champ
 </athletics_and_leadership>
 
 </assistant>`,
-    content: {
-      title: "Education & Learning",
-      subtitle: "Stanford Computer Science with specialization in Artificial Intelligence.",
-      cards: [
-        {
-          title: "Stanford University",
-          content: "B.S. Computer Science (2023) • M.S. Computer Science (2024) • Specialization: Artificial Intelligence",
-          skills: [],
-        },
-        {
-          title: "Research & Publications",
-          content:
-            "Stanford Open Virtual Assistant Lab (OVAL) • Contributed to Genie Worksheets and SUQL • Coauthor: ACL 2025 paper on LLM-Augmented Cognition",
-          skills: [],
-        },
-        {
-          title: "Athletics & Leadership",
-          content:
-            "Men's Water Polo: 4-year varsity, senior captain • NCAA National Champion (2019) • NCAA Elite 90 Award (2021) • Postgraduate Scholarship Recipient",
-          skills: [],
-        },
-      ],
-    },
   },
   experience: {
     icon: CodeIcon,
@@ -198,30 +163,6 @@ Fine-tuned and modified T5 Text-to-Text Transformer model to produce unique sear
 </momentum>
 
 </assistant>`,
-    content: {
-      title: "Professional Experience",
-      subtitle: "Building AI-powered solutions across education, research, and environmental sectors.",
-      cards: [
-        {
-          title: "Candidly - Data Scientist",
-          content:
-            "June 2024 - Present • Tech lead for conversational AI team. Built AI student-loan and college planning assistant from prototype to production. Designed automated support-ticket analysis pipeline and dashboard.",
-          skills: ["Python", "TypeScript", "LangGraph", "AI SDK", "Arize Phoenix", "AWS"],
-        },
-        {
-          title: "Stanford OVAL - Research Assistant",
-          content:
-            "Jan - June 2024 • Contributed to Genie Worksheets framework and SUQL. Coauthored ACL 2025 paper on LLM-Augmented Cognition research.",
-          skills: ["Python", "Postgres", "PyTorch"],
-        },
-        {
-          title: "The Ocean Cleanup - Data Scientist Intern",
-          content:
-            "Sep - Dec 2023 • Developed marine-plastic beaching predictor. Built end-to-end pipeline for feature engineering, dataset assembly, and model training/evaluation.",
-          skills: ["Python", "Pandas", "scikit-learn"],
-        },
-      ],
-    },
   },
   projects: {
     icon: RocketIcon,
@@ -257,27 +198,6 @@ Research on building reliable and controllable task-oriented conversational agen
 </acl_2025_publication>
 
 </assistant>`,
-    content: {
-      title: "Projects & Research",
-      subtitle: "Research contributions and technical work in AI, ML, and data science.",
-      cards: [
-        {
-          title: "ACL 2025 Publication",
-          content: "Coauthor of 'Controllable and Reliable Knowledge-Intensive Task-Oriented Conversational Agents with Declarative Genie Worksheets'",
-          skills: ["Research", "NLP", "Task-Oriented Agents"],
-        },
-        {
-          title: "Conversational AI Platform",
-          content: "Built production AI assistant at Candidly for student-loan and college planning with evaluation, guardrails, and deployment infrastructure.",
-          skills: ["LangGraph", "AI SDK", "Arize Phoenix"],
-        },
-        {
-          title: "Marine Plastic Predictor",
-          content: "Developed ML pipeline to forecast plastic density at coastline hotspots worldwide, producing ranked maps to prioritize cleanup efforts.",
-          skills: ["XGBoost", "Pandas", "scikit-learn"],
-        },
-      ],
-    },
   },
 }
 
@@ -291,7 +211,6 @@ export const Portfolio = () => {
   const [currentOutput, setCurrentOutput] = useState("")
 
   const isInitialRender = useRef(true)
-  const contentContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     return () => {
@@ -327,29 +246,25 @@ export const Portfolio = () => {
     setShowTyping(false)
     setCurrentOutput("")
 
-    await sleep(500)
+    try {
+      // Terminal logs
+      for (const log of data.logs) {
+        setTerminalLines((prev) => [...prev, log])
+        await sleep(LOG_STREAM_DELAY)
+      }
 
-    // Terminal logs
-    for (const log of data.logs) {
-      setTerminalLines((prev) => [...prev, log])
-      await sleep(600)
+      // Show output immediately after logs
+      setCurrentOutput(data.output)
+      setShowOutput(true)
+
+      // Brief typing indicator before streaming content
+      setShowTyping(true)
+      await sleep(TYPING_SPINUP_DELAY)
+      setShowTyping(false)
+      setShowContent(true)
+    } finally {
+      setIsProcessing(false)
     }
-
-    // Show output
-    await sleep(300)
-    setCurrentOutput(data.output)
-    setShowOutput(true)
-
-    // Show typing indicator
-    await sleep(800)
-    setShowTyping(true)
-
-    // Show content
-    await sleep(1500)
-    setShowTyping(false)
-    setShowContent(true)
-
-    setIsProcessing(false)
   }
 
   const handleSectionClick = (section: SectionKey) => {
@@ -475,7 +390,6 @@ export const Portfolio = () => {
                   transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
                 },
               }}
-              ref={contentContainerRef}
               className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-muted/60 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(90dvh-var(--footer-safe-area))] overflow-y-auto"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">
@@ -549,10 +463,6 @@ export const Portfolio = () => {
 
               <div className="px-4 pb-4">
                 <div className="bg-background/10 backdrop-blur-sm rounded-xl p-4 border border-border/30">
-                  {/* <div className="text-muted-foreground mb-4 text-sm font-medium border-b border-border/30 pb-2">
-                    Chat Output
-                  </div> */}
-
                   {showTyping && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -564,9 +474,7 @@ export const Portfolio = () => {
                     </motion.div>
                   )}
 
-                  {showContent && activeSection && (
-                    <StreamingContent section={activeSection} containerRef={contentContainerRef} />
-                  )}
+                  {showContent && activeSection && <StreamingContent section={activeSection} />}
                 </div>
               </div>
             </motion.div>
@@ -577,56 +485,48 @@ export const Portfolio = () => {
   )
 }
 
-const StreamingContent = ({ section, containerRef }: { section: SectionKey; containerRef: React.RefObject<HTMLDivElement> }) => {
-  const [displayedText, setDisplayedText] = useState("")
-  const [isComplete, setIsComplete] = useState(false)
-  const bottomRef = useRef<HTMLDivElement>(null)
+const StreamingContent = ({ section }: { section: SectionKey }) => {
+  const fullContent = sections[section].streamContent.trim()
+  const segments = useMemo(
+    () =>
+      fullContent
+        .split(/\n{2,}/)
+        .map((segment) => segment.trim())
+        .filter(Boolean),
+    [fullContent],
+  )
 
-  const fullContent = sections[section].streamContent
-
-  useEffect(() => {
-    setDisplayedText("")
-    setIsComplete(false)
-    let currentIndex = 0
-    const chunkSize = 3 // Stream multiple characters at once for better readability
-
-    const streamInterval = setInterval(() => {
-      if (currentIndex < fullContent.length) {
-        const nextChunk = fullContent.slice(currentIndex, currentIndex + chunkSize)
-        setDisplayedText((prev) => prev + nextChunk)
-        currentIndex += chunkSize
-      } else {
-        setIsComplete(true)
-        clearInterval(streamInterval)
-      }
-    }, 20) // Fast streaming speed
-
-    return () => clearInterval(streamInterval)
-  }, [section, fullContent])
-
-  // Separate effect to handle auto-scrolling when displayedText changes
-  useEffect(() => {
-    if (bottomRef.current && displayedText.length > 0) {
-      // Use scrollIntoView to scroll the bottom element into view
-      bottomRef.current.scrollIntoView({ behavior: 'auto', block: 'end' })
-    }
-  }, [displayedText])
-
-  return (
-    <div className="font-mono text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-      {displayedText.split(/(<[^>]+>)/g).map((part, index) => {
-        if (part.match(/^<[^>]+>$/)) {
+  const renderSegment = (segment: string, segmentIndex: number) => (
+    <motion.div
+      key={`${segmentIndex}-${segment.slice(0, 12)}`}
+      initial={{ opacity: 0, y: SEGMENT_INITIAL_Y_OFFSET }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: segmentIndex * SEGMENT_STAGGER_DELAY, duration: 0.35, ease: EASE_OUT }}
+      className="whitespace-pre-wrap"
+    >
+      {segment.split(/(<[^>]+>)/g).map((part, index) => {
+        if (/^<[^>]+>$/.test(part)) {
           return (
-            <span key={index} className="text-blue-400">
+            <span key={`${segmentIndex}-${index}`} className="text-blue-400">
               {part}
             </span>
           )
         }
-        return <span key={index}>{part}</span>
+
+        return <span key={`${segmentIndex}-${index}`}>{part}</span>
       })}
-      {!isComplete && <span className="inline-block w-2 h-4 bg-foreground ml-1 animate-pulse" />}
-      <div ref={bottomRef} />
-    </div>
+    </motion.div>
+  )
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: CONTENT_INITIAL_Y_OFFSET }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: EASE_OUT }}
+      className="font-mono text-sm text-foreground leading-relaxed space-y-3"
+    >
+      {segments.length > 0 ? segments.map(renderSegment) : renderSegment(fullContent, 0)}
+    </motion.div>
   )
 }
 
