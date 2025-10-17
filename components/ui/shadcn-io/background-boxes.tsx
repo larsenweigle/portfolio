@@ -1,11 +1,11 @@
 "use client";
 import React from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export const Boxes = ({ className }: { className?: string }) => {
-  const rows = new Array(150).fill(1);
-  const cols = new Array(100).fill(1);
+  // Reduced from 15,000 elements (150x100) to ~3,000 elements (60x50) for better coverage while maintaining performance
+  const rows = new Array(60).fill(1);
+  const cols = new Array(50).fill(1);
   const colors = [
     "--sky-300",
     "--pink-300",
@@ -24,29 +24,28 @@ export const Boxes = ({ className }: { className?: string }) => {
   return (
     <div
       style={{
-        transform: `translate(-40%,-60%) skewX(-48deg) skewY(14deg) scale(0.675) rotate(0deg) translateZ(0)`,
+        // Nudge toward top-left and enlarge to ensure full corner coverage
+        transform: `translate(-52%,-52%) skewX(-48deg) skewY(14deg) scale(0.9) rotate(0deg) translateZ(0)`,
       }}
       className={cn(
-        "absolute left-1/4 p-4 -top-1/4 flex  -translate-x-1/2 -translate-y-1/2 w-full h-full z-0 ",
+        // Slightly larger canvas to avoid edge gaps on ultra-wide viewports
+        "absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 w-[180%] h-[180%] z-0",
         className
       )}
     >
       {rows.map((_, i) => (
-        <motion.div
+        <div
           key={`row` + i}
-          className="w-16 h-8 border-l border-slate-700 dark:border-slate-700 [@media(prefers-color-scheme:light)]:border-slate-300 relative"
+          className="w-16 h-8 border-l border-slate-200 dark:border-slate-800 relative"
         >
           {cols.map((_, j) => (
-            <motion.div
-              whileHover={{
-                backgroundColor: `var(${getRandomColor()})`,
-                transition: { duration: 0 },
-              }}
-              animate={{
-                transition: { duration: 2 },
-              }}
+            <div
               key={`col` + j}
-              className="w-16 h-8 border-r border-t border-slate-700 dark:border-slate-700 [@media(prefers-color-scheme:light)]:border-slate-300 relative"
+              className="w-16 h-8 border-r border-t border-slate-200 dark:border-slate-800 relative hover:bg-[var(--sky-300)] transition-colors duration-200"
+              style={{
+                // @ts-ignore - CSS variable for hover color
+                "--hover-color": `var(${getRandomColor()})`,
+              }}
             >
               {j % 2 === 0 && i % 2 === 0 ? (
                 <svg
@@ -55,7 +54,7 @@ export const Boxes = ({ className }: { className?: string }) => {
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
                   stroke="currentColor"
-                  className="absolute h-6 w-10 -top-[14px] -left-[22px] text-slate-700 dark:text-slate-700 [@media(prefers-color-scheme:light)]:text-slate-300 stroke-[1px] pointer-events-none"
+                  className="absolute h-6 w-10 -top-[14px] -left-[22px] text-slate-200 dark:text-slate-800 stroke-[1px] pointer-events-none"
                 >
                   <path
                     strokeLinecap="round"
@@ -64,9 +63,9 @@ export const Boxes = ({ className }: { className?: string }) => {
                   />
                 </svg>
               ) : null}
-            </motion.div>
+            </div>
           ))}
-        </motion.div>
+        </div>
       ))}
     </div>
   );

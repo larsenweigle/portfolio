@@ -3,12 +3,9 @@ import type { Metadata } from "next"
 import { Instrument_Serif } from "next/font/google"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
-import "./globals.css"
+import "@/styles/globals.css"
 import { cn } from "@/lib/utils"
-import { V0Provider } from "@/lib/context"
-import dynamic from "next/dynamic"
-
-const V0Setup = dynamic(() => import("@/components/v0-setup"))
+ 
 
 const geistSans = GeistSans
 const geistMono = GeistMono
@@ -20,7 +17,7 @@ const instrumentSerif = Instrument_Serif({
   style: ["normal", "italic"],
 })
 
-const isV0 = process.env["VERCEL_URL"]?.includes("vusercontent.net") ?? false
+ 
 
 export const metadata: Metadata = {
   title: {
@@ -38,12 +35,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={cn(geistSans.variable, geistMono.variable, instrumentSerif.variable)}>
-        <V0Provider isV0={isV0}>
-          {children}
-          {isV0 && <V0Setup />}
-        </V0Provider>
+        {children}
       </body>
     </html>
   )

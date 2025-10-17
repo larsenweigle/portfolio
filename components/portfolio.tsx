@@ -2,12 +2,15 @@
 
 import type React from "react"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import * as ReactNS from "react"
 import { Button } from "./ui/button"
-import { AnimatePresence, motion } from "framer-motion"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { Cross1Icon, CodeIcon, PersonIcon, BackpackIcon, RocketIcon } from "@radix-ui/react-icons"
-import { useIsV0 } from "@/lib/context"
+import { Cross1Icon, CodeIcon } from "@radix-ui/react-icons"
+ 
+import { sections, type SectionKey } from "@/data/portfolio-sections"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const DURATION = 0.3
 const DELAY = DURATION
@@ -19,189 +22,16 @@ const SPRING = {
   damping: 10,
   mass: 0.8,
 }
-const LOG_STREAM_DELAY = 120
-const TYPING_SPINUP_DELAY = 200
+// Timings tuned for noticeable but smooth sequence
+const LOG_STREAM_DELAY = 80
+const TYPING_SPINUP_DELAY = 160
 const SEGMENT_STAGGER_DELAY = 0.08 // Delay between paragraph reveals (seconds)
 const SEGMENT_INITIAL_Y_OFFSET = 6 // Initial Y offset for segment fade-in (pixels)
 const CONTENT_INITIAL_Y_OFFSET = 12 // Initial Y offset for content container (pixels)
 
-type SectionKey = "me" | "education" | "experience" | "projects"
-
-const sections = {
-  me: {
-    icon: PersonIcon,
-    tool: "about_me",
-    logs: [
-      ">> executing about_me()...",
-      ">> fetching personal information...",
-      ">> compiling bio data...",
-      ">> returning results...",
-    ],
-    output: `{
-  "name": "Larsen Weigle",
-  "role": "Data Scientist",
-  "location": "San Francisco, CA",
-  "interests": ["AI/ML", "Conversational AI", "LLM Applications"],
-  "status": "thinking about context windows"
-}`,
-    streamContent: `<assistant>
-
-<name>
-Larsen Weigle
-</name>
-
-<location>
-San Francisco, CA
-</location>
-
-<role>
-Data scientist specializing in conversational AI and task-oriented agents. I build AI-powered applications focused on LLM-augmented systems and data-driven solutions. I love working on highly collaborative, fast-paced teams.
-</role>
-
-<current_focus>
-Tech lead for conversational AI team at Candidly. Building student loan and college planning assistants from prototype to production, defining roadmaps for evaluation, guardrails, and deployment.
-</current_focus>
-
-</assistant>`,
-  },
-  education: {
-    icon: BackpackIcon,
-    tool: "fetch_education",
-    logs: [
-      ">> executing fetch_education()...",
-      ">> accessing academic records...",
-      ">> retrieving certifications...",
-      ">> returning educational data...",
-    ],
-    output: `{
-  "degrees": ["B.S. Computer Science", "M.S. Computer Science"],
-  "university": "Stanford University",
-  "years": "2023, 2024",
-  "specialization": "Artificial Intelligence",
-  "research": "Stanford OVAL"
-}`,
-    streamContent: `<assistant>
-
-<stanford_bs_2023>
-Completed Bachelor of Science in Computer Science with specialization in Artificial Intelligence. Developed strong foundation in machine learning, natural language processing, and software engineering principles.
-</stanford_bs_2023>
-
-<stanford_ms_2024>
-Pursued Master of Science in Computer Science, deepening expertise in AI systems and research methodologies. Focused on practical applications of large language models and task-oriented conversational agents.
-</stanford_ms_2024>
-
-<research_and_publications>
-Stanford Open Virtual Assistant Lab (OVAL) - Contributed to Genie Worksheets, a declarative framework for task-oriented agents, and SUQL, an extension of SQL with free-text primitives for LLMs to perform search over hybrid structured/unstructured data. Coauthor of ACL 2025 paper: "Controllable and Reliable Knowledge-Intensive Task-Oriented Conversational Agents with Declarative Genie Worksheets"
-</research_and_publications>
-
-<athletics_and_leadership>
-Men's Water Polo: Four-year varsity athlete, senior captain. NCAA National Champion (2019). NCAA Elite 90 Award recipient (2021) - highest GPA at national championship. Postgraduate Scholarship Recipient. Alpha Pi chapter vice president. Member of StanfordStartups.ai.
-</athletics_and_leadership>
-
-</assistant>`,
-  },
-  experience: {
-    icon: CodeIcon,
-    tool: "get_experience",
-    logs: [
-      ">> executing get_experience()...",
-      ">> querying work history...",
-      ">> processing achievements...",
-      ">> returning career data...",
-    ],
-    output: `{
-  "current": "Data Scientist @ Candidly",
-  "roles": ["Data Scientist", "Research Assistant", "ML Engineer"],
-  "companies": ["Candidly", "Stanford OVAL", "The Ocean Cleanup", "Caktus.ai", "Momentum"],
-  "specialties": ["Conversational AI", "LLM Applications", "ML Infrastructure"]
-}`,
-    streamContent: `<assistant>
-
-<candidly>
-<role>Data Scientist</role>
-<duration>June 2024 - Present</duration>
-<description>
-Tech lead for conversational AI team. Built AI student-loan and college planning assistant from prototype to production, defining roadmap for evaluation, guardrails, and deployment. Designed automated support-ticket analysis pipeline and dashboard that summarize, classify, and cluster tickets to surface trends and product bugs.
-</description>
-<stack>Python, TypeScript, LangGraph, AI SDK, Arize Phoenix, AWS, Postgres, Hex</stack>
-</candidly>
-
-<stanford_oval>
-<role>Research Assistant</role>
-<duration>January - June 2024</duration>
-<description>
-Contributed to Genie Worksheets, a declarative framework for task-oriented agents, and SUQL, an extension of SQL with free-text primitives for LLMs to perform search over hybrid structured/unstructured data. Coauthored ACL 2025 paper on OVAL's LLM-Augmented Cognition research.
-</description>
-<stack>Python, Postgres, PyTorch, GCS</stack>
-</stanford_oval>
-
-<the_ocean_cleanup>
-<role>Data Scientist Intern</role>
-<duration>September - December 2023</duration>
-<description>
-Developed marine-plastic beaching predictor to forecast density/weight at coastline hotspots and candidate sites worldwide. Built end-to-end pipeline for feature engineering, dataset assembly, and model training/evaluation using linear regression, XGBoost, and ordinal logistic models, producing ranked maps to prioritize cleanup efforts.
-</description>
-<stack>Python, Pandas, scikit-learn</stack>
-</the_ocean_cleanup>
-
-<caktus_ai>
-<role>Machine Learning Engineer Intern</role>
-<duration>March - September 2023</duration>
-<description>
-Supervised fine-tuned and quantized open source models on proprietary academic journal datasets. Constructed company's first LLM-as-judge pipeline to generate pairwise evaluations across different models.
-</description>
-<stack>Python, Hugging Face, Google Colab</stack>
-</caktus_ai>
-
-<momentum>
-<role>Software Engineer Intern</role>
-<duration>June - August 2022</duration>
-<description>
-Fine-tuned and modified T5 Text-to-Text Transformer model to produce unique search queries given product descriptions, which was used to build training targets for a CLIP embedding model for products. Created packages to scrape stock keeping units and global trade numbers from HTML of product pages for various e-commerce websites.
-</description>
-<stack>Python, PyTorch, Golang, K8s</stack>
-</momentum>
-
-</assistant>`,
-  },
-  projects: {
-    icon: RocketIcon,
-    tool: "search_projects",
-    logs: [
-      ">> executing search_projects()...",
-      ">> scanning repositories...",
-      ">> analyzing contributions...",
-      ">> returning project list...",
-    ],
-    output: `{
-  "research": ["Genie Worksheets", "SUQL"],
-  "publication": "ACL 2025",
-  "focus_areas": ["Conversational AI", "Task-Oriented Agents", "ML Infrastructure"],
-  "github": "github.com/larsenweigle"
-}`,
-    streamContent: `<assistant>
-
-<coming soon>
-More projects coming soon...
-</coming soon>
-
-<acl_2025_publication>
-<title>
-Controllable and Reliable Knowledge-Intensive Task-Oriented Conversational Agents with Declarative Genie Worksheets
-</title>
-<conference>ACL 2025</conference>
-<role>Coauthor</role>
-<arxiv>arXiv:2407.05674</arxiv>
-<description>
-Research on building reliable and controllable task-oriented conversational agents using declarative frameworks. Explores methods for creating knowledge-intensive dialogue systems that can handle complex, multi-turn interactions while maintaining accuracy and user trust.
-</description>
-</acl_2025_publication>
-
-</assistant>`,
-  },
-}
-
 export const Portfolio = () => {
+  const prefersReducedMotion = useReducedMotion()
+  const isMobile = useIsMobile()
   const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [terminalLines, setTerminalLines] = useState<string[]>([])
@@ -273,19 +103,27 @@ export const Portfolio = () => {
       return
     }
 
+    // Immediate visual feedback for instant responsiveness
     setActiveSection(section)
-    startAgentFlow(section)
+
+    // Run async flow without blocking UI thread
+    ReactNS.startTransition(() => {
+      startAgentFlow(section)
+    })
   }
 
   return (
-    <div className="flex overflow-hidden relative flex-col gap-6 justify-center items-center pt-4 w-full h-full short:lg:pt-4 pb-footer-safe-area 2xl:pt-footer-safe-area px-sides">
-      <motion.div layout="position" transition={{ duration: DURATION, ease: EASE_OUT }}>
+    <div className="flex overflow-hidden relative flex-col gap-3 justify-center items-center pt-4 w-full h-full short:lg:pt-4 pb-16 md:pb-20 px-sides will-change-transform will-change-opacity gpu-accelerate">
+      <motion.div
+        animate={{ opacity: 1 }}
+        transition={{ duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT }}
+      >
         <h1 className="font-serif text-4xl italic short:lg:text-3xl sm:text-4xl lg:text-5xl text-foreground">
           Larsen Weigle
         </h1>
       </motion.div>
 
-      <div className="flex flex-col items-center min-h-0 shrink gap-6">
+      <div className="flex flex-col items-center min-h-0 shrink gap-3">
         <AnimatePresenceGuard>
           {!activeSection && (
             <motion.div
@@ -297,34 +135,34 @@ export const Portfolio = () => {
                 visible: {
                   scale: 1,
                   transition: {
-                    delay: DELAY,
-                    duration: DURATION,
+                    delay: prefersReducedMotion ? 0 : DELAY,
+                    duration: prefersReducedMotion ? 0 : DURATION,
                     ease: EASE_OUT,
                   },
                 },
                 hidden: {
                   scale: 0.9,
-                  transition: { duration: DURATION, ease: EASE_OUT },
+                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT },
                 },
                 exit: {
                   y: -150,
                   scale: 0.9,
-                  transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
                 },
               }}
-              className="flex flex-col items-center gap-6"
+              className="flex flex-col items-center gap-6 will-change-transform will-change-opacity gpu-accelerate"
             >
               <motion.p
                 initial={isInitialRender.current ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{
                   opacity: 0,
-                  transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
                 }}
                 transition={{
-                  duration: DURATION,
+                  duration: prefersReducedMotion ? 0 : DURATION,
                   ease: EASE_OUT,
-                  delay: DELAY,
+                  delay: prefersReducedMotion ? 0 : DELAY,
                 }}
                 className="text-sm short:lg:text-sm sm:text-base lg:text-lg leading-relaxed font-medium text-center text-foreground/90 text-pretty max-w-2xl"
               >
@@ -349,7 +187,12 @@ export const Portfolio = () => {
             </motion.div>
           )}
 
-          <motion.div layout="position" transition={SPRING} key="button" className={activeSection ? "my-2" : "mt-4"}>
+          <motion.div
+            animate={{ scale: activeSection ? 0.95 : 1 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+            key="button"
+            className={activeSection ? "my-2" : "mt-4"}
+          >
             <Button
               variant="outline"
               className={cn("relative h-7", activeSection ? "px-2 w-7" : "px-4 text-xs")}
@@ -374,23 +217,23 @@ export const Portfolio = () => {
                   opacity: 1,
                   scale: 1,
                   transition: {
-                    delay: DELAY,
-                    duration: DURATION,
+                    delay: prefersReducedMotion ? 0 : DELAY,
+                    duration: prefersReducedMotion ? 0 : DURATION,
                     ease: EASE_OUT,
                   },
                 },
                 hidden: {
                   opacity: 0,
                   scale: 0.9,
-                  transition: { duration: DURATION, ease: EASE_OUT },
+                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT },
                 },
                 exit: {
                   opacity: 0,
                   scale: 0.9,
-                  transition: { duration: DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
                 },
               }}
-              className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-muted/60 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(90dvh-var(--footer-safe-area))] overflow-y-auto"
+              className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-muted/60 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(100%-3.5rem)] overflow-y-auto will-change-transform will-change-opacity gpu-accelerate"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">
                 {/* Agent Visualization */}
@@ -432,7 +275,10 @@ export const Portfolio = () => {
                 </div>
 
                 {/* Terminal */}
-                <div className="bg-background/90 rounded-xl p-3 border border-border/30 font-mono text-xs">
+                <div className={cn(
+                  "bg-background/90 rounded-xl p-3 border border-border/30 font-mono text-xs will-change-transform will-change-opacity gpu-accelerate",
+                  isProcessing && "relative terminal-active"
+                )}>
                   <div className="text-muted-foreground mb-2 text-xs">STDOUT</div>
                   <div className="space-y-0.5 min-h-[80px]">
                     {terminalLines.map((line, index) => (
@@ -440,7 +286,7 @@ export const Portfolio = () => {
                         key={index}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
                         className="text-success"
                       >
                         {line}
@@ -452,8 +298,8 @@ export const Portfolio = () => {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="mt-2 p-2 bg-muted/20 rounded-lg text-xs text-muted-foreground whitespace-pre-wrap border border-border/30"
+                      transition={{ duration: prefersReducedMotion ? 0 : 0.36 }}
+                      className="mt-2 p-2 bg-muted/20 rounded-lg text-xs text-muted-foreground whitespace-pre-wrap border border-border/30 will-change-transform will-change-opacity gpu-accelerate"
                     >
                       {currentOutput}
                     </motion.div>
@@ -462,7 +308,7 @@ export const Portfolio = () => {
               </div>
 
               <div className="px-4 pb-4">
-                <div className="bg-background/10 backdrop-blur-sm rounded-xl p-4 border border-border/30">
+                <div className="bg-background/10 backdrop-blur-sm rounded-xl p-4 border border-border/30 will-change-transform will-change-opacity gpu-accelerate">
                   {showTyping && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -485,57 +331,35 @@ export const Portfolio = () => {
   )
 }
 
-const StreamingContent = ({ section }: { section: SectionKey }) => {
+const StreamingContent = ReactNS.memo(({ section }: { section: SectionKey }) => {
+  const prefersReducedMotion = useReducedMotion()
+  const isMobile = useIsMobile()
   const fullContent = sections[section].streamContent.trim()
-  const segments = useMemo(
-    () =>
-      fullContent
-        .split(/\n{2,}/)
-        .map((segment) => segment.trim())
-        .filter(Boolean),
-    [fullContent],
-  )
-
-  const renderSegment = (segment: string, segmentIndex: number) => (
-    <motion.div
-      key={`${segmentIndex}-${segment.slice(0, 12)}`}
-      initial={{ opacity: 0, y: SEGMENT_INITIAL_Y_OFFSET }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: segmentIndex * SEGMENT_STAGGER_DELAY, duration: 0.35, ease: EASE_OUT }}
-      className="whitespace-pre-wrap"
-    >
-      {segment.split(/(<[^>]+>)/g).map((part, index) => {
-        if (/^<[^>]+>$/.test(part)) {
-          return (
-            <span key={`${segmentIndex}-${index}`} className="text-blue-400">
-              {part}
-            </span>
-          )
-        }
-
-        return <span key={`${segmentIndex}-${index}`}>{part}</span>
-      })}
-    </motion.div>
-  )
+  const contentDuration = prefersReducedMotion ? 0 : (isMobile ? 0.28 : 0.36)
 
   return (
     <motion.div
       initial={{ opacity: 0, y: CONTENT_INITIAL_Y_OFFSET }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: EASE_OUT }}
-      className="font-mono text-sm text-foreground leading-relaxed space-y-3"
+      transition={{ duration: contentDuration, ease: EASE_OUT }}
+      className="font-mono text-sm text-foreground leading-relaxed whitespace-pre-wrap will-change-opacity will-change-transform gpu-accelerate"
     >
-      {segments.length > 0 ? segments.map(renderSegment) : renderSegment(fullContent, 0)}
+      {fullContent.split(/(<[^>]+>)/g).map((part, index) => (
+        /^<[^>]+>$/.test(part) ? (
+          <span key={`${section}-${index}`} className="text-blue-400">{part}</span>
+        ) : (
+          <span key={`${section}-${index}`}>{part}</span>
+        )
+      ))}
     </motion.div>
   )
-}
+})
+
+StreamingContent.displayName = 'StreamingContent'
 
 const AnimatePresenceGuard = ({ children }: { children: React.ReactNode }) => {
-  const isV0 = useIsV0()
-  return isV0 ? (
-    <>{children}</>
-  ) : (
-    <AnimatePresence mode="popLayout" propagate>
+  return (
+    <AnimatePresence mode="sync" initial={false}>
       {children}
     </AnimatePresence>
   )

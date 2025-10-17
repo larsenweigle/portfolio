@@ -6,6 +6,36 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Performance optimizations for animations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Force GPU acceleration for smoother animations */
+  .gpu-accelerate {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Terminal activation subtle scanline effect */
+  @keyframes terminal-scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(200%); }
+  }
+  .terminal-active::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,.04), transparent);
+    animation: terminal-scanline 2s linear infinite;
+    pointer-events: none;
+  }
 }
 
 @layer base {
@@ -45,6 +75,11 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 76% 36%;
+    --success-foreground: 138 76% 97%;
+    --inset: 1rem;
+    --sides: 2rem;
+    --footer-safe-area: 3.5rem;
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -79,6 +114,11 @@
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --success: 142 70% 45%;
+    --success-foreground: 138 76% 97%;
+    --inset: 1rem;
+    --sides: 2rem;
+    --footer-safe-area: 3.5rem;
   }
 }
 
