@@ -23,8 +23,8 @@ const SPRING = {
   mass: 0.8,
 }
 // Timings tuned for noticeable but smooth sequence
-const LOG_STREAM_DELAY = 80
-const TYPING_SPINUP_DELAY = 160
+const LOG_STREAM_DELAY = 120
+const TYPING_SPINUP_DELAY = 300
 const SEGMENT_STAGGER_DELAY = 0.08 // Delay between paragraph reveals (seconds)
 const SEGMENT_INITIAL_Y_OFFSET = 6 // Initial Y offset for segment fade-in (pixels)
 const CONTENT_INITIAL_Y_OFFSET = 12 // Initial Y offset for content container (pixels)
@@ -32,6 +32,8 @@ const CONTENT_INITIAL_Y_OFFSET = 12 // Initial Y offset for content container (p
 export const Portfolio = () => {
   const prefersReducedMotion = useReducedMotion()
   const isMobile = useIsMobile()
+  const effectiveDuration = prefersReducedMotion ? 0 : (isMobile ? DURATION * 1.8 : DURATION)
+  const effectiveDelay = prefersReducedMotion ? 0 : (isMobile ? DELAY * 1.2 : DELAY)
   const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [terminalLines, setTerminalLines] = useState<string[]>([])
@@ -78,9 +80,10 @@ export const Portfolio = () => {
 
     try {
       // Terminal logs
+      const perLineDelay = isMobile ? Math.round(LOG_STREAM_DELAY * 1.2) : LOG_STREAM_DELAY
       for (const log of data.logs) {
         setTerminalLines((prev) => [...prev, log])
-        await sleep(LOG_STREAM_DELAY)
+        await sleep(perLineDelay)
       }
 
       // Show output immediately after logs
@@ -88,8 +91,9 @@ export const Portfolio = () => {
       setShowOutput(true)
 
       // Brief typing indicator before streaming content
+      const typingDelay = isMobile ? Math.round(TYPING_SPINUP_DELAY * 1.2) : TYPING_SPINUP_DELAY
       setShowTyping(true)
-      await sleep(TYPING_SPINUP_DELAY)
+      await sleep(typingDelay)
       setShowTyping(false)
       setShowContent(true)
     } finally {
@@ -116,7 +120,7 @@ export const Portfolio = () => {
     <div className="flex overflow-hidden relative flex-col gap-3 justify-center items-center pt-4 w-full h-full short:lg:pt-4 pb-16 md:pb-20 px-sides will-change-transform will-change-opacity gpu-accelerate">
       <motion.div
         animate={{ opacity: 1 }}
-        transition={{ duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT }}
+        transition={{ duration: effectiveDuration, ease: EASE_OUT }}
       >
         <h1 className="font-serif text-4xl italic short:lg:text-3xl sm:text-4xl lg:text-5xl text-foreground">
           Larsen Weigle
@@ -135,19 +139,19 @@ export const Portfolio = () => {
                 visible: {
                   scale: 1,
                   transition: {
-                    delay: prefersReducedMotion ? 0 : DELAY,
-                    duration: prefersReducedMotion ? 0 : DURATION,
+                    delay: effectiveDelay,
+                    duration: effectiveDuration,
                     ease: EASE_OUT,
                   },
                 },
                 hidden: {
                   scale: 0.9,
-                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT },
+                  transition: { duration: effectiveDuration, ease: EASE_OUT },
                 },
                 exit: {
                   y: -150,
                   scale: 0.9,
-                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: effectiveDuration, ease: EASE_OUT_OPACITY },
                 },
               }}
               className="flex flex-col items-center gap-6 will-change-transform will-change-opacity gpu-accelerate"
@@ -157,12 +161,12 @@ export const Portfolio = () => {
                 animate={{ opacity: 1 }}
                 exit={{
                   opacity: 0,
-                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: effectiveDuration, ease: EASE_OUT_OPACITY },
                 }}
                 transition={{
-                  duration: prefersReducedMotion ? 0 : DURATION,
+                  duration: effectiveDuration,
                   ease: EASE_OUT,
-                  delay: prefersReducedMotion ? 0 : DELAY,
+                  delay: effectiveDelay,
                 }}
                 className="text-sm short:lg:text-sm sm:text-base lg:text-lg leading-relaxed font-medium text-center text-foreground/90 text-pretty max-w-2xl"
               >
@@ -189,7 +193,7 @@ export const Portfolio = () => {
 
           <motion.div
             animate={{ scale: activeSection ? 0.95 : 1 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+            transition={{ duration: prefersReducedMotion ? 0 : (isMobile ? 0.35 : 0.2) }}
             key="button"
             className={activeSection ? "my-2" : "mt-4"}
           >
@@ -217,20 +221,20 @@ export const Portfolio = () => {
                   opacity: 1,
                   scale: 1,
                   transition: {
-                    delay: prefersReducedMotion ? 0 : DELAY,
-                    duration: prefersReducedMotion ? 0 : DURATION,
+                    delay: effectiveDelay,
+                    duration: effectiveDuration,
                     ease: EASE_OUT,
                   },
                 },
                 hidden: {
                   opacity: 0,
                   scale: 0.9,
-                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT },
+                  transition: { duration: effectiveDuration, ease: EASE_OUT },
                 },
                 exit: {
                   opacity: 0,
                   scale: 0.9,
-                  transition: { duration: prefersReducedMotion ? 0 : DURATION, ease: EASE_OUT_OPACITY },
+                  transition: { duration: effectiveDuration, ease: EASE_OUT_OPACITY },
                 },
               }}
               className="relative flex flex-col gap-3 backdrop-blur-xl border-2 border-border/50 bg-muted/60 max-w-5xl w-full text-foreground rounded-3xl ring-1 ring-offset-primary/10 ring-border/10 ring-offset-2 shadow-button max-h-[calc(100%-3.5rem)] overflow-y-auto will-change-transform will-change-opacity gpu-accelerate"
@@ -286,7 +290,7 @@ export const Portfolio = () => {
                         key={index}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: prefersReducedMotion ? 0 : 0.25 }}
+                        transition={{ duration: prefersReducedMotion ? 0 : (isMobile ? 0.35 : 0.25) }}
                         className="text-success"
                       >
                         {line}
@@ -298,7 +302,7 @@ export const Portfolio = () => {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: prefersReducedMotion ? 0 : 0.36 }}
+                      transition={{ duration: prefersReducedMotion ? 0 : (isMobile ? 0.5 : 0.36) }}
                       className="mt-2 p-2 bg-muted/20 rounded-lg text-xs text-muted-foreground whitespace-pre-wrap border border-border/30 will-change-transform will-change-opacity gpu-accelerate"
                     >
                       {currentOutput}
@@ -335,7 +339,7 @@ const StreamingContent = ReactNS.memo(({ section }: { section: SectionKey }) => 
   const prefersReducedMotion = useReducedMotion()
   const isMobile = useIsMobile()
   const fullContent = sections[section].streamContent.trim()
-  const contentDuration = prefersReducedMotion ? 0 : (isMobile ? 0.28 : 0.36)
+  const contentDuration = prefersReducedMotion ? 0 : (isMobile ? 0.55 : 0.4)
 
   return (
     <motion.div
